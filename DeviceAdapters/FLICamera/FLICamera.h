@@ -75,6 +75,7 @@ class CFLICamera : public CCameraBase<CFLICamera>
 		int OnCCDTemperatureSetpoint(MM::PropertyBase* pProp, MM::ActionType eAct);
 		int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
 		int OnShutterSetting(MM::PropertyBase* pProp, MM::ActionType eAct);
+		int OnCameraModeSetting(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 	private:
 		int ResizeImageBuffer();

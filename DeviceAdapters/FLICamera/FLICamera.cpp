@@ -53,6 +53,8 @@ const char* g_PixelType_16bit = "16bit";
 
 const char* g_Keyword_CameraSerial = "CameraSerial";
 
+const char* g_Keyword_CameraMode = "CameraMode"; 
+
 #define DOFLIAPIERR(F,A) {long status; \
 	if ((status = (F)) != 0) \
 	{ char err[1024]; memset(err, '\0', 1024); \
@@ -211,6 +213,10 @@ int CFLICamera::Initialize()
   assert(ret == DEVICE_OK);
 
 	ret = SetPropertyLimits(MM::g_Keyword_Binning, 1, 255);
+	assert(ret == DEVICE_OK);
+
+	pAct = new CPropertyAction(this, &CFLICamera::OnCameraMode);
+	ret = CreateProperty(g_Keyword_CameraMode, "0", MM::Integer, false, pAct);
 	assert(ret == DEVICE_OK);
 
 	pAct = new CPropertyAction (this, &CFLICamera::OnPixelType);
@@ -715,6 +721,50 @@ int CFLICamera::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 
 	return ret; 
+}
+
+int CFLICamera::OnCameraMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	int ret = DEVICE_OK;
+	long mode;
+	switch(eAct)
+	{
+		case MM::AfterSet:
+		{
+			pProp->Get(mode);
+
+			ret = FLISetCameraMode(dev_, mode);
+			if (ret != 0)
+			{
+				Disconnect();
+				ret = DEVICE_NOT_CONNECTED;
+			}
+			else 
+			{
+				ret = DEVICE_OK;
+			}
+
+		}
+		break;
+
+		case MM::BeforeGet:
+		{
+			ret = FLIGetCameraMode(dev_, &mode);
+			if (ret != 0)
+			{
+				Disconnect();
+				ret = DEVICE_NOT_CONNECTED;
+			}
+			else
+			{
+				pProp->Set(mode);
+				ret = DEVICE_OK;
+			}	
+		}
+		break;
+	}
+
+	return ret;
 }
 
 int CFLICamera::PrepareSequenceAcqusition()
