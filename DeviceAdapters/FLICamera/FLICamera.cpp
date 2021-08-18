@@ -21,7 +21,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-#ifdef WIN32
+#ifdef _WIN32
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -32,13 +32,18 @@ extern "C" {
 	long __stdcall FLILibDetach(void);
 }
 
+#elif __linux__
+typedef bool BOOL;
+#else
 #endif
+
 
 #include "FLICamera.h"
 #include "ModuleInterface.h"
 #include <string>
 #include <sstream>
 #include <cmath>
+#include <unistd.h>
 
 using namespace std;
 
@@ -73,21 +78,21 @@ const char* g_Keyword_CameraMode = "CameraMode";
 		if (a != false) break; } }
 
 
-BOOL APIENTRY DllMain(HANDLE /*hModule*/,
-                      DWORD ul_reason_for_call,
-                      LPVOID /*lpReserved*/)
-{
-	switch(ul_reason_for_call)
-	{
-		case DLL_PROCESS_ATTACH:
-			FLILibAttach();
-			break;
-		case DLL_PROCESS_DETACH:
-			FLILibDetach();
-			break;
-	}
-	return TRUE;
-}
+//BOOL APIENTRY DllMain(HANDLE /*hModule*/,
+//                      DWORD ul_reason_for_call,
+//                      LPVOID /*lpReserved*/)
+//{
+//	switch(ul_reason_for_call)
+//	{
+//		case DLL_PROCESS_ATTACH:
+//			FLILibAttach();
+//			break;
+//		case DLL_PROCESS_DETACH:
+//			FLILibDetach();
+//			break;
+//	}
+//	return true;
+//}
 
 
 MODULE_API void InitializeModuleData()
@@ -148,17 +153,30 @@ void CFLICamera::GetName(char* name) const
 
 int CFLICamera::Initialize()
 {
-  CPropertyAction *pAct = NULL;
+  	CPropertyAction *pAct = NULL;
 	int ret = 0;
 	long ul_x, ul_y, lr_x, lr_y;
 	char buf[32];
+	char** pMyList;
+	char* pCameraToOpen;
+	char* pSeparator;
+	pMyList = NULL;
 
 	if (initialized_)
 		return DEVICE_OK;
 
-	DOFLIAPIERR(FLIOpen(&dev_, "flipro0", FLIDOMAIN_USB | FLIDEVICE_CAMERA), DEVICE_NOT_CONNECTED);
-	DOFLIAPIERR(FLIControlShutter(dev_, shutter_), DEVICE_NOT_CONNECTED);
-	DOFLIAPIERR(FLIGetPixelSize(dev_, &pixel_x_, &pixel_y_), DEVICE_NOT_CONNECTED);
+	DOFLIAPIERR(FLIList(FLIDOMAIN_USB | FLIDEVICE_CAMERA, &pMyList), DEVICE_QTX_ERROR_1);
+	pCameraToOpen = strdup(*pMyList);
+	pSeparator = index(pCameraToOpen, ';');
+	if (pSeparator) {
+		*pSeparator = '\0';
+	}
+	DOFLIAPIERR(FLIOpen(&dev_, pCameraToOpen, FLIDOMAIN_USB | FLIDEVICE_CAMERA), DEVICE_QTX_ERROR_2);
+
+	
+// DOFLIAPIERR(FLIOpen(&dev_, "flipro0", FLIDOMAIN_USB | FLIDEVICE_CAMERA), DEVICE_QTX_ERROR_1);
+	DOFLIAPIERR(FLIControlShutter(dev_, shutter_), DEVICE_QTX_ERROR_3);
+	DOFLIAPIERR(FLIGetPixelSize(dev_, &pixel_x_, &pixel_y_), DEVICE_QTX_ERROR_4);
 	DOFLIAPIERR(FLIGetVisibleArea(dev_, &ul_x, &ul_y, &lr_x, &lr_y), DEVICE_NOT_CONNECTED);
 
 	image_offset_x_ = ul_x;
@@ -212,10 +230,11 @@ int CFLICamera::Initialize()
   ret = SetAllowedValues(MM::g_Keyword_Binning, binValues);
   assert(ret == DEVICE_OK);
 
-	ret = SetPropertyLimits(MM::g_Keyword_Binning, 1, 255);
-	assert(ret == DEVICE_OK);
+  	// RET FAILS (PropertyLimits gone?)
+	//ret = SetPropertyLimits(MM::g_Keyword_Binning, 1, 255);
+	//assert(ret == DEVICE_OK);
 
-	pAct = new CPropertyAction(this, &CFLICamera::OnCameraMode);
+	pAct = new CPropertyAction(this, &CFLICamera::OnCameraModeSetting);
 	ret = CreateProperty(g_Keyword_CameraMode, "0", MM::Integer, false, pAct);
 	assert(ret == DEVICE_OK);
 
@@ -276,7 +295,7 @@ int CFLICamera::Shutdown()
 
 bool CFLICamera::Busy()
 {
-	return FALSE;
+	return false;
 }
 
 int CFLICamera::SnapImage()
@@ -354,7 +373,7 @@ int CFLICamera::SnapImage()
 			else
 			{
 				/* Not run wild! */
-				Sleep((remaining_exposure > 200)?200:(remaining_exposure < 10)?10:remaining_exposure);
+				usleep(((remaining_exposure > 200)?200:(remaining_exposure < 10)?10:remaining_exposure) * 1000);
 			}
 		}
 
@@ -723,7 +742,7 @@ int CFLICamera::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return ret; 
 }
 
-int CFLICamera::OnCameraMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CFLICamera::OnCameraModeSetting(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	int ret = DEVICE_OK;
 	long mode;
@@ -785,8 +804,6 @@ double CFLICamera::GetPixelSizeUm() const
 int CFLICamera::ResizeImageBuffer()
 {
 	int byteDepth = 2;
-
-	assert(byteDepth != 2);
 
 	img_.Resize(width_ / bin_x_, height_ / bin_y_, byteDepth);
 

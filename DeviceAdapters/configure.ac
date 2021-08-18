@@ -492,6 +492,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    Diskovery
    FakeCamera
    FocalPoint
+   FLICamera
    FreeSerialPort
    HamiltonMVP
    HamiltonMVP/unittest

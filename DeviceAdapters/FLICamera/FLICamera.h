@@ -24,7 +24,11 @@
 #ifndef _FLICAMERA_H_
 #define _FLICAMERA_H_
 
+extern "C" 
+{
 #include "libfli.h"
+}
+
 #include "DeviceBase.h"
 #include "ImgBuffer.h"
 #include "DeviceUtils.h"

@@ -119,6 +119,7 @@ SUBDIRS = \
 	DTOpenLayer \
 	Diskovery \
 	FocalPoint \
+	FLICamera \
 	FreeSerialPort \
 	HamiltonMVP \
 	HydraLMT200 \
