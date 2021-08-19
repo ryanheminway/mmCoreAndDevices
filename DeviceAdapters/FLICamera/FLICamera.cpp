@@ -78,21 +78,21 @@ const char* g_Keyword_CameraMode = "CameraMode";
 		if (a != false) break; } }
 
 
-//BOOL APIENTRY DllMain(HANDLE /*hModule*/,
-//                      DWORD ul_reason_for_call,
-//                      LPVOID /*lpReserved*/)
-//{
-//	switch(ul_reason_for_call)
-//	{
-//		case DLL_PROCESS_ATTACH:
-//			FLILibAttach();
-//			break;
-//		case DLL_PROCESS_DETACH:
-//			FLILibDetach();
-//			break;
-//	}
-//	return true;
-//}
+BOOL APIENTRY DllMain(HANDLE /*hModule*/,
+                      DWORD ul_reason_for_call,
+                      LPVOID /*lpReserved*/)
+{
+	switch(ul_reason_for_call)
+	{
+		case DLL_PROCESS_ATTACH:
+			FLILibAttach();
+			break;
+		case DLL_PROCESS_DETACH:
+			FLILibDetach();
+			break;
+	}
+	return true;
+}
 
 
 MODULE_API void InitializeModuleData()
@@ -172,9 +172,6 @@ int CFLICamera::Initialize()
 		*pSeparator = '\0';
 	}
 	DOFLIAPIERR(FLIOpen(&dev_, pCameraToOpen, FLIDOMAIN_USB | FLIDEVICE_CAMERA), DEVICE_QTX_ERROR_2);
-
-	
-// DOFLIAPIERR(FLIOpen(&dev_, "flipro0", FLIDOMAIN_USB | FLIDEVICE_CAMERA), DEVICE_QTX_ERROR_1);
 	DOFLIAPIERR(FLIControlShutter(dev_, shutter_), DEVICE_QTX_ERROR_3);
 	DOFLIAPIERR(FLIGetPixelSize(dev_, &pixel_x_, &pixel_y_), DEVICE_QTX_ERROR_4);
 	DOFLIAPIERR(FLIGetVisibleArea(dev_, &ul_x, &ul_y, &lr_x, &lr_y), DEVICE_NOT_CONNECTED);
@@ -230,7 +227,7 @@ int CFLICamera::Initialize()
   ret = SetAllowedValues(MM::g_Keyword_Binning, binValues);
   assert(ret == DEVICE_OK);
 
-  	// RET FAILS (PropertyLimits gone?)
+  	// (TODO) RET FAILS?
 	//ret = SetPropertyLimits(MM::g_Keyword_Binning, 1, 255);
 	//assert(ret == DEVICE_OK);
 

@@ -78,17 +78,6 @@
 #define DEVICE_SEQUENCE_TOO_LARGE      39
 #define DEVICE_OUT_OF_MEMORY           40
 #define DEVICE_NOT_YET_IMPLEMENTED     41
-#define DEVICE_QTX_ERROR_1	       42
-#define DEVICE_QTX_ERROR_2	       43
-#define DEVICE_QTX_ERROR_3	       44
-#define DEVICE_QTX_ERROR_4	       45
-#define DEVICE_QTX_ERROR_5	       46
-#define DEVICE_QTX_ERROR_6	       47
-#define DEVICE_QTX_ERROR_7	       48
-#define DEVICE_QTX_ERROR_8	       49
-#define DEVICE_QTX_ERROR_9	       50
-
-
 
 namespace MM {
    const int MaxStrLength = 1024;
