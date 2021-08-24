@@ -59,6 +59,7 @@ const char* g_PixelType_16bit = "16bit";
 const char* g_Keyword_CameraSerial = "CameraSerial";
 
 const char* g_Keyword_CameraMode = "CameraMode"; 
+const char* g_Keyword_CameraModeString = "CameraModeString";
 
 #define DOFLIAPIERR(F,A) {long status; \
 	if ((status = (F)) != 0) \
@@ -155,7 +156,7 @@ int CFLICamera::Initialize()
 {
   	CPropertyAction *pAct = NULL;
 	int ret = 0;
-	long ul_x, ul_y, lr_x, lr_y;
+	long ul_x, ul_y, lr_x, lr_y, mode;
 	char buf[32];
 	char** pMyList;
 	char* pCameraToOpen;
@@ -230,9 +231,17 @@ int CFLICamera::Initialize()
   	// (TODO) RET FAILS?
 	//ret = SetPropertyLimits(MM::g_Keyword_Binning, 1, 255);
 	//assert(ret == DEVICE_OK);
-
+  	DOFLIAPIERR(FLIGetCameraMode(dev_, &mode), DEVICE_NOT_CONNECTED);
+	memset(buf, '\0', sizeof(buf));
+	sprintf(buf, "%d", mode);
 	pAct = new CPropertyAction(this, &CFLICamera::OnCameraModeSetting);
-	ret = CreateProperty(g_Keyword_CameraMode, "0", MM::Integer, false, pAct);
+	ret = CreateProperty(g_Keyword_CameraMode, buf, MM::Integer, false, pAct);
+	assert(ret == DEVICE_OK);
+	
+	memset(buf, '\0', sizeof(buf));
+	DOFLIAPIERR(FLIGetCameraModeString(dev_, mode, buf, sizeof(buf) - 1), DEVICE_NOT_CONNECTED);
+	pAct = new CPropertAction(this, &CFLICamera::OnCameraModeStringSetting);
+	ret = CreateProperty(g_Keyword_CameraModeString, buf, MM::String, false, pAct);
 	assert(ret == DEVICE_OK);
 
 	pAct = new CPropertyAction (this, &CFLICamera::OnPixelType);
@@ -737,6 +746,42 @@ int CFLICamera::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 
 	return ret; 
+}
+
+int CFLICamera::OnCameraModeStringSetting(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	int ret = DEVICE_OK;
+	long mode;
+	char* mode_str = new char[50];
+	switch(eAct)
+	{
+		case MM::BeforeGet:
+		{
+			ret = FLIGetCameraMode(dev_, &mode);
+			if (ret != 0)
+			{
+				Disconnect();
+				ret = DEVICE_NOT_CONNECTED;
+			}
+			else
+			{
+				memset(mode_str, '\0', sizeof(mode_str));
+				ret = FLIGetCameraModeString(dev_, mode, mode_str, sizeof(mode_str) - 1);
+				if (ret != 0)
+					{
+					Disconnect();
+					ret = DEVICE_NOT_CONNECTED;
+				} else {
+
+					pProp->Set(mode_str);
+					ret = DEVICE_OK;
+				}		
+			}	
+		}
+		break;
+	}
+
+	return ret;
 }
 
 int CFLICamera::OnCameraModeSetting(MM::PropertyBase* pProp, MM::ActionType eAct)

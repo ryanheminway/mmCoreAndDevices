@@ -80,6 +80,7 @@ class CFLICamera : public CCameraBase<CFLICamera>
 		int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
 		int OnShutterSetting(MM::PropertyBase* pProp, MM::ActionType eAct);
 		int OnCameraModeSetting(MM::PropertyBase* pProp, MM::ActionType eAct);
+		int OnCameraModeStringSetting(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 	private:
 		int ResizeImageBuffer();
