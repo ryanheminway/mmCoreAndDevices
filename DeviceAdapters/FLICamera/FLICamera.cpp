@@ -79,21 +79,21 @@ const char* g_Keyword_CameraModeString = "CameraModeString";
 		if (a != false) break; } }
 
 
-BOOL APIENTRY DllMain(HANDLE /*hModule*/,
-                      DWORD ul_reason_for_call,
-                      LPVOID /*lpReserved*/)
-{
-	switch(ul_reason_for_call)
-	{
-		case DLL_PROCESS_ATTACH:
-			FLILibAttach();
-			break;
-		case DLL_PROCESS_DETACH:
-			FLILibDetach();
-			break;
-	}
-	return true;
-}
+//BOOL APIENTRY DllMain(HANDLE /*hModule*/,
+//                      DWORD ul_reason_for_call,
+//                      LPVOID /*lpReserved*/)
+//{
+//	switch(ul_reason_for_call)
+//	{
+//		case DLL_PROCESS_ATTACH:
+//			FLILibAttach();
+//			break;
+//		case DLL_PROCESS_DETACH:
+//			FLILibDetach();
+//			break;
+//	}
+//	return true;
+//}
 
 
 MODULE_API void InitializeModuleData()
@@ -166,15 +166,15 @@ int CFLICamera::Initialize()
 	if (initialized_)
 		return DEVICE_OK;
 
-	DOFLIAPIERR(FLIList(FLIDOMAIN_USB | FLIDEVICE_CAMERA, &pMyList), DEVICE_QTX_ERROR_1);
+	DOFLIAPIERR(FLIList(FLIDOMAIN_USB | FLIDEVICE_CAMERA, &pMyList), DEVICE_NOT_CONNECTED);
 	pCameraToOpen = strdup(*pMyList);
 	pSeparator = index(pCameraToOpen, ';');
 	if (pSeparator) {
 		*pSeparator = '\0';
 	}
-	DOFLIAPIERR(FLIOpen(&dev_, pCameraToOpen, FLIDOMAIN_USB | FLIDEVICE_CAMERA), DEVICE_QTX_ERROR_2);
-	DOFLIAPIERR(FLIControlShutter(dev_, shutter_), DEVICE_QTX_ERROR_3);
-	DOFLIAPIERR(FLIGetPixelSize(dev_, &pixel_x_, &pixel_y_), DEVICE_QTX_ERROR_4);
+	DOFLIAPIERR(FLIOpen(&dev_, pCameraToOpen, FLIDOMAIN_USB | FLIDEVICE_CAMERA), DEVICE_NOT_CONNECTED);
+	DOFLIAPIERR(FLIControlShutter(dev_, shutter_), DEVICE_NOT_CONNECTED);
+	DOFLIAPIERR(FLIGetPixelSize(dev_, &pixel_x_, &pixel_y_), DEVICE_NOT_CONNECTED);
 	DOFLIAPIERR(FLIGetVisibleArea(dev_, &ul_x, &ul_y, &lr_x, &lr_y), DEVICE_NOT_CONNECTED);
 
 	image_offset_x_ = ul_x;
@@ -240,7 +240,7 @@ int CFLICamera::Initialize()
 	
 	memset(buf, '\0', sizeof(buf));
 	DOFLIAPIERR(FLIGetCameraModeString(dev_, mode, buf, sizeof(buf) - 1), DEVICE_NOT_CONNECTED);
-	pAct = new CPropertAction(this, &CFLICamera::OnCameraModeStringSetting);
+	pAct = new CPropertyAction(this, &CFLICamera::OnCameraModeStringSetting);
 	ret = CreateProperty(g_Keyword_CameraModeString, buf, MM::String, false, pAct);
 	assert(ret == DEVICE_OK);
 
